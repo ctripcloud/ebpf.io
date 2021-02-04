@@ -1,17 +1,13 @@
 import React from "react";
-import Link from "gatsby-link";
-import { unescape, shuffle } from "lodash";
-import { format, parse as parseDate } from "date-fns";
-import Slider from "infinite-react-carousel";
 import Layout from "../layouts";
-import { graphql } from "gatsby";
-import { Post } from "../templates/post";
-import Helmet from "react-helmet";
-
+import { graphql, Link } from 'gatsby'
+import BlogLatest from "../common/homepage/BlogLatest";
+import BlogRoll from "../common/homepage/BlogRoll";
+import HelmetBlock from "../common/homepage/Helmet";
+import MainTitle from "../common/homepage/MainTitle";
+import Section from "../common/homepage/Section";
+import Videos from "../common/homepage/Videos";
 import "../stylesheets/index.scss";
-
-const pageMetaTitle = 'eBPF - Introduction, Tutorials & Community Resources'
-const pageMetaDescription = 'eBPF is a revolutionary technology that can run sandboxed programs in the Linux kernel without changing kernel source code or loading a kernel module.'
 
 const tracingText = `
 加载eBPF程序到跟踪点以及内核和用户应用程序探测点的能力，为应用程序和系统本身的运行时行为带来了前所未有的可视化展示。
@@ -35,12 +31,6 @@ const monitoringText = `
 通过只收集所需的可视化数据，在事件来源处生成直方图和类似的数据结构，而不是依赖样本的导出，这样可以扩展能够实现的可视化深度，并显著降低系统的总体开销。
 `;
 
-const Title = () => (
-  <hgroup>
-    <img className="main-logo" src={require("../assets/logo-big.png")} />
-  </hgroup>
-);
-
 const Buttons = () => (
   <h1 className="main-buttons">
     <Link to="/what-is-ebpf" className="main-button">
@@ -50,14 +40,6 @@ const Buttons = () => (
       项目列表
     </Link>
   </h1>
-);
-
-const Section = ({ icon, iconWidth, iconHeight, title, text, ...props }) => (
-  <div className="main-section" {...props}>
-    <div className="main-section-title">{title}</div>
-    <img className="section-logo" src={icon} width={iconWidth} />
-    <div className="main-section-text">{text}</div>
-  </div>
 );
 
 const Intro = () => (
@@ -76,64 +58,6 @@ const Intro = () => (
     </p>
   </div>
 );
-
-class Videos extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      videos: [],
-    };
-  }
-
-  componentDidMount() {
-    this.setState({
-      videos: shuffle([
-        "https://www.youtube.com/embed/mFxs3VXABPU?start=12&enablejsapi=1",
-        "https://www.youtube.com/embed/7pmXdG8-7WU?start=7&enablejsapi=1",
-        "https://www.youtube.com/embed/_Iq1xxNZOAo?start=45&enablejsapi=1",
-        "https://www.youtube.com/embed/U3PdyHlrG1o?start=7&enablejsapi=1",
-        "https://www.youtube.com/embed/ZYBXZFKPS28?start=0&enablejsapi=1",
-      ]),
-    });
-  }
-
-  render() {
-    return (
-      <div className="videos-section">
-        <h2>eBPF专题演讲</h2>
-        {this.state.videos.length > 0 && (
-          <Slider
-            dots
-            arrows={false}
-            beforeChange={(oldIndex) => {
-              const ref = `video-${this.state.videos[oldIndex]}`;
-              this.refs[ref].contentWindow.postMessage(
-                '{"event":"command","func":"pauseVideo","args":""}',
-                "*"
-              );
-            }}
-          >
-            {this.state.videos.map((src) => {
-              return (
-                <div className="video-wrapper" key={src}>
-                  <iframe
-                    ref={`video-${src}`}
-                    src={src}
-                    className="video"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  ></iframe>
-                </div>
-              );
-            })}
-          </Slider>
-        )}
-      </div>
-    );
-  }
-}
 
 const Sections = () => (
   <div className="main-sections" style={{ marginTop: "30px" }}>
@@ -165,15 +89,6 @@ const Sections = () => (
   </div>
 );
 
-const BlogLatest = ({ posts }) => (
-  <div className="blog-latest">
-    <h2>Latest Blog Posts</h2>
-    <div className="blog-posts">
-      {posts.map(({node: post}) => <Post key={post.id} post={post} />)}
-    </div>
-  </div>
-);
-
 const Outro = () => (
   <div className="intro">
     <p>
@@ -193,7 +108,7 @@ const Outro = () => (
           <td>
             <ul>
               <li>
-                <a href="https://cilium.herokuapp.com/">
+                <a href="/slack">
                   加入 #ebpf Slack社区
                 </a>
               </li>
@@ -208,160 +123,21 @@ const Outro = () => (
   </div>
 );
 
-class BlogRoll extends React.Component {
-  feeds = [
-    {
-      url:
-        "https://api.rss2json.com/v1/api.json?rss_url=http%3A%2F%2Fwww.brendangregg.com%2Fblog%2Frss.xml",
-      author: "Brendan Gregg",
-      filterBy: (post) => post.title.toLowerCase().includes("bpf"),
-    },
-    {
-      url:
-        "https://api.rss2json.com/v1/api.json?rss_url=http%3A%2F%2Ffetchrss.com%2Frss%2F5f326ba08a93f8883b8b45675f326d238a93f8b34b8b4567.xml",
-      author: null,
-      filterBy: (post) =>
-        post.title.toLowerCase().includes("bpf") &&
-        post.link !==
-        "https://facebookmicrosites.github.io/bpf/blog/2018/08/31/welcome.html",
-    },
-    {
-      url:
-        "https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fcilium.io%2Fblog%2Frss.xml",
-      author: "Cilium authors",
-      filterBy: (post) =>
-        post.categories.some((category) =>
-          category.toLowerCase().includes("announcements")
-        ),
-    },
-    {
-      url:
-        "https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fqmonnet.github.io%2Fwhirl-offload%2Ffeed.xml",
-      author: "Quentin Monnet",
-      filterBy: (post) => post.title.toLowerCase().includes("bpf"),
-    },
-    {
-      url:
-        "https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fpchaigno.github.io%2Ffeed.xml",
-      author: "Paul Chaignon",
-      filterBy: (post) => post.title.toLowerCase().includes("bpf"),
-    },
-  ];
-
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      posts: [],
-    };
-  }
-
-  componentDidMount() {
-    Promise.all(
-      this.feeds.map((feed) =>
-        fetch(feed.url)
-          .then((r) => r.json())
-          .then((post) => ({ feed, post }))
-      )
-    )
-      .then((results) => {
-        return results.reduce((acc, { feed, post: { items } }) => {
-          return acc.concat(
-            items
-              .map((post) => ({
-                ...post,
-                pubDate: parseDate(
-                  post.pubDate,
-                  "yyyy-MM-dd hh:mm:ss",
-                  new Date()
-                ),
-                author: post.author || feed.author,
-              }))
-              .sort((a, b) => b.pubDate - a.pubDate)
-              .filter(
-                (post) =>
-                  feed.filterBy(post) && post.pubDate.getFullYear() >= 2018
-              )
-              .slice(0, 3)
-          );
-        }, []);
-      })
-      .then((posts) => {
-        posts.sort((a, b) => b.pubDate - a.pubDate);
-        return posts;
-      })
-      .then((posts) => {
-        this.setState({ posts });
-      })
-      .catch((error) => console.error(error));
-  }
-
-  render() {
-    return (
-      <div className="blog-roll-section">
-        <h2>eBPF专题博文</h2>
-        {this.state.posts.length === 0 && (
-          <div className="blog-roll-loading">Loading...</div>
-        )}
-        {this.state.posts.length > 0 && (
-          <ul>
-            {this.state.posts.map((post) => {
-              return (
-                <li key={post.link}>
-                  <a
-                    href={post.link}
-                    className="blog-roll-item"
-                    target="_blank"
-                  >
-                    <span className="blog-roll-date">
-                      {format(post.pubDate, "MMM d, yyyy")}
-                    </span>{" "}
-                    <span className="blog-roll-title">
-                      <u>{unescape(post.title)}</u>{" "}
-                      <span className="blog-roll-author">{post.author}</span>
-                    </span>
-                  </a>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-    );
-  }
-}
-
-const IndexPage = ({ data }) => (
-  <Layout>
+const IndexPage = ({ data }) => {
+  return <Layout>
     <div className="page-wrapper page-index">
-      <Helmet
-        title={pageMetaTitle}
-
-        meta={[
-          {name: "keywords", content: "ebpf, bpf, xdp, introduction, tutorial, documentation, deep dive, community"},
-          {name: "type", property: "og:type", content: "website"},
-          {name: "url", property: "og:url", content: "https://ebpf.io/"},
-          {name: "title", property: "og:title", content: pageMetaTitle},
-          {name: "description", property: "og:description", content: pageMetaDescription},
-          {name: "image", property: "og:image", content: 'https://ebpf.io' + require("../assets/ogimage.png")},
-          {name: "twitter:card", content: "summary_large_image"},
-          {name: "twitter:url", content: "https://ebpf.io/"},
-          {name: "twitter:title", content: pageMetaTitle},
-          {name: "twitter:description", content: pageMetaDescription},
-          {name: "twitter:image", content: 'https://ebpf.io' + require("../assets/ogimage.png")},
-        ]}
-      />
-      <Title />
+      <HelmetBlock />
+      <MainTitle />
       <Buttons />
       <Intro />
       <Sections />
-      <Videos />
-      <BlogLatest posts={data.allMarkdownRemark.edges} />
-      <BlogRoll />
+      <Videos title="eBPF专题演讲" />
+      <BlogLatest title="Latest Blog Posts" posts={data.allMarkdownRemark.edges} />
+      <BlogRoll title="eBPF专题博文" />
       <Outro />
     </div>
   </Layout>
-);
+};
 
 export default IndexPage;
 
